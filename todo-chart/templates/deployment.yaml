@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo.frontendDeploymentName" . }}
+  labels:
+    {{- include "todo.labels" . | nindent 4 }}
+    {{- include "todo.frontendSelectorLabels" . | nindent 4 }}
+  {{- with .Values.deployment.frontend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.deployment.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "todo.frontendSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "todo.frontendSelectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ printf "%s-frontend" (include "todo.fullname" .) }}
+          image: {{ .Values.deployment.frontend.spec.image }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.deployment.frontend.spec.port }}
+          env:
+            - name: APP_PORT
+              value: {{ .Values.deployment.frontend.spec.port | quote }}
+            {{- if .Values.deployment.frontend.proxy_backend }}
+            - name: RUNTIME_API_URL
+              value: {{ .Values.ingress.rule.backend.path }}/
+            - name: RUNTIME_ENABLE_BACKEND_PROXY
+              value: "true"
+            - name: RUNTIME_PROXY_BACKEND
+              value: http://{{ include "todo.backendServiceName" . }}:{{ .Values.service.backend.spec.port }}/
+            {{- else }}
+            - name: RUNTIME_API_URL
+              value: https://{{ .Values.ingress.rule.hostName }}{{ .Values.ingress.rule.backend.path }}
+            - name: RUNTIME_ENABLE_BACKEND_PROXY
+              value: "false"
+            {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo.backendDeploymentName" . }}
+  labels:
+    {{- include "todo.labels" . | nindent 4 }}
+    {{- include "todo.backendSelectorLabels" . | nindent 4 }}
+  {{- with .Values.deployment.backend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "todo.backendSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "todo.backendSelectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "todo.serviceAccountName" . }}
+      containers:
+        - name: {{ printf "%s-backend" (include "todo.fullname" .) }}
+          image: {{ .Values.deployment.backend.spec.image }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.deployment.backend.spec.port }}
+          env:
+            - name: APP_PORT
+              value: {{ .Values.deployment.backend.spec.port | quote }}
+            - name: DB_CRED_FILE_PATH
+              value: /etc/secrets/{{ .Values.secretProviderClass.spec.parameters.objects.dbCred.objectAlias }}
+            - name: DB_CONNECTION_FILE_PATH
+              value: /etc/secrets/{{ .Values.secretProviderClass.spec.parameters.objects.dbConn.objectAlias }}
+          volumeMounts:
+            - name: db-secret
+              mountPath: /etc/secrets
+              readOnly: true
+      volumes:
+        - name: db-secret
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ include "todo.secretProviderClassName" . }}

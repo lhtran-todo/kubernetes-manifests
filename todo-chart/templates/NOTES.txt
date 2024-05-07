@@ -1,0 +1,5 @@
+1. Frontend:
+http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.rule.hostName }}/
+
+2. Backend:
+http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.rule.hostName }}{{ .Values.ingress.rule.backend.path }}/

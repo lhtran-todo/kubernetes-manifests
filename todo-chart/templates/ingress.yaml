@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "todo.ingressName" . }}
+  annotations:
+    {{- if not .Values.deployment.frontend.proxy_backend }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    {{- end }}  
+    {{ .Values.ingress.extraAnnotations | toYaml }}
+spec:
+  tls:
+      {{- toYaml .Values.ingress.tls | nindent 4 }}
+  rules:
+    - host: {{ .Values.ingress.rule.hostName }}
+      http:
+        paths:
+        {{- if not .Values.deployment.frontend.proxy_backend }}
+        - path: {{ printf "%s(/|$)(.*)" .Values.ingress.rule.backend.path }}
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: {{ include "todo.backendServiceName" . }}
+              port:
+                number: {{ .Values.service.backend.spec.port }}
+        - path: /()(.*)
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: {{ include "todo.frontendServiceName" . }}
+              port:
+                number: {{ .Values.service.frontend.spec.port }}
+        {{- else }}
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ include "todo.frontendServiceName" . }}
+              port:
+                number: {{ .Values.service.frontend.spec.port }}
+        {{- end }}     

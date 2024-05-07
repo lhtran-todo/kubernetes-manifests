@@ -2,17 +2,19 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: todo-argocd-app
-  namespace: todo
 spec:
   project: default
   source:
     repoURL: https://github.com/lhtran-todo/kubernetes-yaml.git
-    targetRevision: HEAD
-    path: ./app
+    targetRevision: dev
+    helm:
+      valueFiles:
+        - dev-local-values.yaml
+      path: todo-chart
   destination:
-    server: https://kubernetes.default.svc
+    server: 'https://kubernetes.default.svc'
     namespace: todo
   syncPolicy:
     automated:
-      selfHeal: true
       prune: true
+      selfHeal: true

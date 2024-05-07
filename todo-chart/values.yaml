@@ -1,0 +1,73 @@
+# Default values for todo.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::{account}:role/{role_name}
+  name: ""
+  
+secretProviderClass:
+  name: ""
+  annotations: {}
+  spec:
+    provider: "aws"
+    parameters:
+      region: us-east-1
+      objects:
+        dbConn:
+          objectName: "{param_name}"
+          objectType: ssmparameter
+          objectAlias: db_conn.jsons
+        dbCred:
+          objectName: "{secret_name}"
+          objectType: secretsmanager
+          objectAlias: db_cred.json
+
+service:
+  frontend:
+    name: ""
+    annotations: {}
+    spec:
+      type: ClusterIP
+      port: 80
+  backend:
+    name: ""
+    annotations: {}
+    spec:
+      type: ClusterIP
+      port: 8000
+
+deployment:
+  frontend:
+    name: ""
+    annotations: {}
+    replicaCount: 1
+    proxy_backend: false
+    spec:
+      image: longhtran91/todo-frontend
+      port: 80
+  backend:
+    name: ""
+    annotations: {}
+    replicaCount: 1
+    spec:
+      image: longhtran91/todo-backend
+      port: 8000  
+
+ingress:
+  name: ""
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-local-lhtran-net-stg
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  tls:
+    - hosts:
+      - todo.local.lhtran.net
+      secretName: todo-ingress-secret
+  rule:
+    hostName: todo.local.lhtran.net
+    backend:
+      path: /api

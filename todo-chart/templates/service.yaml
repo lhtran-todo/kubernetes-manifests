@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "todo.frontendServiceName" . }}
+  labels:
+    {{- include "todo.labels" . | nindent 4 }}
+  {{- with .Values.service.frontend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.service.frontend.spec.port }}
+      targetPort: {{ .Values.deployment.frontend.spec.port }}
+      protocol: TCP
+  type: {{ .Values.service.frontend.spec.type }}
+  selector:
+    {{- include "todo.frontendSelectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "todo.backendServiceName" . }}
+  labels:
+    {{- include "todo.labels" . | nindent 4 }}
+  {{- with .Values.service.backend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.service.backend.spec.port }}
+      targetPort: {{ .Values.deployment.backend.spec.port }}
+      protocol: TCP
+  type: {{ .Values.service.backend.spec.type }}
+  selector:
+    {{- include "todo.backendSelectorLabels" . | nindent 4 }}
