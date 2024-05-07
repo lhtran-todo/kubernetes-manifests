@@ -14,7 +14,7 @@ spec:
         - ../dev-local-values.yaml
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: todo
+    namespace: todo-dev
   syncPolicy:
     automated:
       prune: true
