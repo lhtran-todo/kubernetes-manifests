@@ -18,6 +18,7 @@ spec:
     metadata:
       labels:
         {{- include "todo.frontendSelectorLabels" . | nindent 8 }}
+        {{ .Values.deployment.frontend.extraLabels | toYaml }}
     spec:
       containers:
         - name: {{ printf "%s-frontend" (include "todo.fullname" .) }}
@@ -62,6 +63,7 @@ spec:
     metadata:
       labels:
         {{- include "todo.backendSelectorLabels" . | nindent 8 }}
+        {{ .Values.deployment.backend.extraLabels | toYaml }}
     spec:
       serviceAccountName: {{ include "todo.serviceAccountName" . }}
       containers:

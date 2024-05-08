@@ -44,6 +44,7 @@ deployment:
   frontend:
     name: ""
     annotations: {}
+    extraLabels: {}
     replicaCount: 1
     proxy_backend: false
     spec:
@@ -52,6 +53,7 @@ deployment:
   backend:
     name: ""
     annotations: {}
+    extraLabels: {}
     replicaCount: 1
     spec:
       image: longhtran91/todo-backend
